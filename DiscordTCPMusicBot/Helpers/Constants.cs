@@ -22,6 +22,7 @@ namespace DiscordTCPMusicBot.Helpers
         public const string KeycapTen = "🔟";
 
         public const string EmojiX = "❌";
-        
+
+        public const string appDataSubPath = "Olfi01\\DCTCP\\";
     }
 }

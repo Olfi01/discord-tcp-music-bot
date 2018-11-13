@@ -2,6 +2,7 @@
 using Discord.Commands;
 using Discord.Net.Providers.WS4Net;
 using Discord.WebSocket;
+using DiscordTCPMusicBot.Helpers;
 using DiscordTCPMusicBot.Services;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -163,7 +164,7 @@ namespace DiscordTCPMusicBot
             _map.AddSingleton(new QueueManagerService());
             _map.AddSingleton(new AudioClientService());
 
-            ConfigService config = new ConfigService("config.json");
+            ConfigService config = new ConfigService(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), Constants.appDataSubPath, "config.json"));
             Cleanup(config.FileCachePath);
             token = config.BotToken;
             _map.AddSingleton(config);

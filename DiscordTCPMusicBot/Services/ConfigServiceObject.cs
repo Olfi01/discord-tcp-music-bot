@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using DiscordTCPMusicBot.Helpers;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -15,7 +16,7 @@ namespace DiscordTCPMusicBot.Services
         {
             MaxSearchResults = 4;
             CachePersistTime = TimeSpan.FromDays(1);
-            FileCachePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Olfi01\\DCTCP\\temp\\");
+            FileCachePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), Constants.appDataSubPath, "temp\\");
             SongDelay = TimeSpan.FromSeconds(2);
             MinSkipQuota = 0.5f;
         }
