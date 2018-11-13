@@ -21,7 +21,7 @@ namespace DiscordTCPMusicBot.Helpers
         public const string KeycapNine = "9⃣";
         public const string KeycapTen = "🔟";
 
-        public static readonly string[] KeycapsNames = { };
+        public const string EmojiX = "❌";
         
     }
 }

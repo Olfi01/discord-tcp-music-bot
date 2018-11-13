@@ -23,18 +23,61 @@ namespace DiscordTCPMusicBot
 
         static void Main(string[] args)
         {
-            new Program().MainAsync().GetAwaiter().GetResult();
+#if DEBUG
+            var logSeverity = LogSeverity.Debug;
+#else
+            var logSeverity = LogSeverity.Info;
+#endif
+
+            for (int i = 0; i < args.Length; i++)
+            {
+                switch (args[i])
+                {
+                    case "-s":
+                    case "-S":
+                    case "--severity":
+                    case "--Severity":
+                        if (args.Length >= i + 1) continue;
+                        logSeverity = GetSeverity(args[i + 1]);
+                        i++;
+                        continue;
+                }
+            }
+            new Program(logSeverity).MainAsync().GetAwaiter().GetResult();
         }
 
-        private Program()
+        private static LogSeverity GetSeverity(string v)
+        {
+            switch (v.ToLower())
+            {
+                case "0":
+                case "critical":
+                    return LogSeverity.Critical;
+                case "1":
+                case "error":
+                    return LogSeverity.Error;
+                case "2":
+                case "warning":
+                    return LogSeverity.Warning;
+                case "3":
+                case "info":
+                    return LogSeverity.Info;
+                case "4":
+                case "verbose":
+                    return LogSeverity.Verbose;
+                case "5":
+                case "debug":
+                    return LogSeverity.Debug;
+                default:
+                    return LogSeverity.Info;
+            }
+        }
+
+        private Program(LogSeverity logSeverity)
         {
             _client = new DiscordSocketClient(new DiscordSocketConfig
             {
-#if DEBUG
-                LogLevel = LogSeverity.Debug,
-#else
-                LogLevel = LogSeverity.Info,
-#endif
+                LogLevel = logSeverity,
                 MessageCacheSize = 50,
                 WebSocketProvider = WS4NetProvider.Instance,
             });

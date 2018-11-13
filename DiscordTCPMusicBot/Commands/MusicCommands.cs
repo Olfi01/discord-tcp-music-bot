@@ -51,6 +51,12 @@ namespace DiscordTCPMusicBot.Commands
                 {
                     if (message.Id != sentMessage.Id || reaction.UserId != Context.Message.Author.Id || !Constants.Keycaps.Contains(reaction.Emote.Name))
                         return Task.CompletedTask;
+                    if (Constants.EmojiX == reaction.Emote.Name)
+                    {
+                        title = "Nothing";
+                        waiter.Set();
+                        return Task.CompletedTask;
+                    }
                     for (int i = 0; i < Constants.Keycaps.Length; i++)
                     {
                         if (Constants.Keycaps[i + 1] == reaction.Emote.Name)
@@ -69,6 +75,7 @@ namespace DiscordTCPMusicBot.Commands
                 {
                     await sentMessage.AddReactionAsync(new Emoji(Constants.Keycaps[i]));
                 }
+                await sentMessage.AddReactionAsync(new Emoji(Constants.EmojiX));
 
                 Context.Client.ReactionAdded += handler;
                 waiter.WaitOne();
