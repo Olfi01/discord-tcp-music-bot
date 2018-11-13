@@ -12,7 +12,6 @@ namespace DiscordTCPMusicBot.Services
         public ConfigService(string filePath)
         {
             this.filePath = filePath;
-            Directory.CreateDirectory(filePath);
 
             if (!File.Exists(filePath))
             {
@@ -22,6 +21,8 @@ namespace DiscordTCPMusicBot.Services
             {
                 config = JsonConvert.DeserializeObject<ConfigServiceObject>(File.ReadAllText(filePath));
             }
+
+            WriteFile();
         }
 
         private void WriteFile()

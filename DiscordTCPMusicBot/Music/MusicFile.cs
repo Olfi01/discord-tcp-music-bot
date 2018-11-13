@@ -26,6 +26,9 @@ namespace DiscordTCPMusicBot.Music
 
         public async Task DownloadAsync(string filePath)
         {
+            var dir = Path.GetDirectoryName(filePath);
+            if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+
             try
             {
                 if (FilePath != null) throw new InvalidOperationException("File has already been downloaded.");
