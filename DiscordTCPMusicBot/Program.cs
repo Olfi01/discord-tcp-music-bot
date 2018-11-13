@@ -142,7 +142,7 @@ namespace DiscordTCPMusicBot
         {
             using (HttpListener listener = new HttpListener())
             {
-                listener.Prefixes.Add("http://localhost:420/");
+                listener.Prefixes.Add(Config.HttpPrefix);
                 listener.AuthenticationSchemes = AuthenticationSchemes.Basic;
                 listener.Start();
                 while (true)

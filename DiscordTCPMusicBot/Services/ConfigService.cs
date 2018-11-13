@@ -38,5 +38,6 @@ namespace DiscordTCPMusicBot.Services
         public TimeSpan SongDelay { get => config.SongDelay; set { config.SongDelay = value; WriteFile(); } }
         public string BotToken { get => File.ReadAllText(Helper.GetAppDataPath("token.txt")); }
         public float MinSkipQuota { get => config.MinSkipQuota; set { config.MinSkipQuota = value; WriteFile(); } }
+        public string HttpPrefix { get => config.HttpPrefix; set { config.HttpPrefix = value; WriteFile(); } }
     }
 }
