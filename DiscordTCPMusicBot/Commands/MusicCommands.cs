@@ -95,7 +95,7 @@ namespace DiscordTCPMusicBot.Commands
         #endregion
         #region !play
         [Command("play"), Summary("Plays music from youtube"), RequireContext(ContextType.Guild)]
-        public async Task Play([Remainder, Summary("The query or the URL of the youtube video.")] string param)
+        public async Task Play([Remainder, Summary("The query or the URL of the youtube video.")] string urlOrQuery)
         {
             SocketGuild guild = Context.Guild;
             QueueService queue = Queues.GetOrCreateService(guild.Id);
@@ -105,7 +105,7 @@ namespace DiscordTCPMusicBot.Commands
 
             // Query, select first video found, works for links too.
             // If param looks like a valid Uri, don't search for title similarities.
-            var result = Search(param, 1, Uri.IsWellFormedUriString(param, UriKind.Absolute) ? (Func<VideoInformation, int>)(x => (x.Url == param) ? 0 : 1) : null)[0];
+            var result = Search(urlOrQuery, 1, Uri.IsWellFormedUriString(urlOrQuery, UriKind.Absolute) ? (Func<VideoInformation, int>)(x => (x.Url == urlOrQuery) ? 0 : 1) : null)[0];
             youtubeLink = result.Url;
             title = result.Title;
 
