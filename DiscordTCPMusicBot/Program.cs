@@ -1,15 +1,21 @@
 ﻿using Discord;
+using Discord.Audio;
 using Discord.Commands;
 using Discord.Net.Providers.WS4Net;
 using Discord.WebSocket;
 using DiscordTCPMusicBot.Helpers;
+using DiscordTCPMusicBot.Music;
+using DiscordTCPMusicBot.Queue;
 using DiscordTCPMusicBot.Services;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Threading.Tasks;
+using YoutubeSearch;
 
 namespace DiscordTCPMusicBot
 {
@@ -19,6 +25,11 @@ namespace DiscordTCPMusicBot
 
         private readonly IServiceCollection _map = new ServiceCollection();
         private readonly CommandService _commands = new CommandService(new CommandServiceConfig { DefaultRunMode = RunMode.Async });
+
+        private QueueManagerService Queues;
+        private AudioClientService AudioClients;
+        private CacheService Cache;
+        private ConfigService Config;
 
         private string token;
 
@@ -159,7 +170,16 @@ namespace DiscordTCPMusicBot
                         command = reader.ReadToEnd();
                     }
                     HttpListenerResponse response = context.Response;
-                    string responseString = HandleHttpCommand(command, userId, guildId);
+                    string responseString;
+                    try
+                    {
+                        responseString = HandleHttpCommand(command, userId, guildId);
+                    }
+                    catch (Exception ex)
+                    {
+                        responseString = ex.ToString();
+                        response.StatusCode = (int)HttpStatusCode.InternalServerError;
+                    }
                     using (StreamWriter writer = new StreamWriter(response.OutputStream))
                     {
                         writer.Write(responseString);
@@ -171,24 +191,63 @@ namespace DiscordTCPMusicBot
 
         private string HandleHttpCommand(string command, ulong userId, ulong guildId)
         {
-            throw new NotImplementedException();
+            string action = command;
+            string args = null;
+            if (command.Contains(" "))
+            {
+                action = command.Remove(command.IndexOf(" "));
+                args = command.Substring(command.IndexOf(" ") + 1);
+            }
+
+            switch (action)
+            {
+                #region play
+                case "play":
+                    if (string.IsNullOrEmpty(args)) return "You must specify either a query or a URL";
+
+                    SocketGuild guild = _client.GetGuild(guildId);
+                    QueueService queue = Queues.GetOrCreateService(guildId);
+
+                    string youtubeLink;
+                    string title = null;
+
+                    // Query, select first video found, works for links too.
+                    // If param looks like a valid Uri, don't search for title similarities.
+                    var result = Search(args, 1, Uri.IsWellFormedUriString(args, UriKind.Absolute) ? (Func<VideoInformation, int>)(x => (x.Url == args) ? 0 : 1) : null)[0];
+                    youtubeLink = result.Url;
+                    title = result.Title;
+
+                    Enqueue(youtubeLink, title, guildId, userId);
+
+                    if (IsInVoiceChannel(guild, userId) && !IAmInVoiceChannel(FindVoiceChannel(guild, userId)))
+                    {
+                        JoinAndPlay(queue, FindVoiceChannel(guild, userId)).Wait();
+                    }
+                    return Enqueued(title);
+                    #endregion
+            }
+
+            return "Unrecognized command.";
         }
 
         private IServiceProvider _services;
 
         private async Task Init(HttpAuthenticationService httpAuth)
         {
-            _map.AddSingleton(new CacheService());
-            _map.AddSingleton(new AudioClientService());
+            Cache = new CacheService();
+            _map.AddSingleton(Cache);
+            AudioClients = new AudioClientService();
+            _map.AddSingleton(AudioClients);
             var gcmService = new GuildConfigManagerService();
             _map.AddSingleton(gcmService);
             _map.AddSingleton(httpAuth);
 
-            ConfigService config = new ConfigService(Helper.GetAppDataPath("config.json"));
-            Cleanup(config.FileCachePath);
-            token = config.BotToken;
-            _map.AddSingleton(config);
-            _map.AddSingleton(new QueueManagerService(config, gcmService));
+            Config = new ConfigService(Helper.GetAppDataPath("config.json"));
+            Cleanup(Config.FileCachePath);
+            token = Config.BotToken;
+            _map.AddSingleton(Config);
+            Queues = new QueueManagerService(Config, gcmService);
+            _map.AddSingleton(Queues);
 
             _services = _map.BuildServiceProvider();
 
@@ -219,6 +278,85 @@ namespace DiscordTCPMusicBot
                 await _commands.ExecuteAsync(context, pos, _services);
             }
         }
+
+        #region Helper functions
+        #region Voice channels
+        private SocketVoiceChannel FindVoiceChannel(SocketGuild guild, ulong userId)
+        {
+            return guild.VoiceChannels.First(x => x.Users.Any(y => y.Id == userId));
+        }
+
+        private bool IsInVoiceChannel(SocketGuild guild, ulong userId)
+        {
+            return guild.VoiceChannels.Any(x => x.Users.Any(y => y.Id == userId));
+        }
+
+        private async Task<IAudioClient> JoinChannel(SocketVoiceChannel channel)
+        {
+            if (AudioClients.IsInChannelOf(channel.Guild.Id)) await AudioClients.LeaveChannelOn(channel.Guild.Id);
+
+            return await AudioClients.Join(channel);
+        }
+
+        private async Task JoinAndPlay(QueueService queue, SocketVoiceChannel channel)
+        {
+            IAudioClient client = await JoinChannel(channel);
+            PlayQueue(queue, client);
+        }
+
+        private bool IAmInVoiceChannel(SocketVoiceChannel channel)
+        {
+            return channel.Users.Any(x => x.Id == _client.CurrentUser.Id);
+        }
+        #endregion
+        #region Queue
+        private void Enqueue(string youtubeLink, string title, ulong guildId, ulong userId)
+        {
+            QueueEntry entry = null;
+            if (Cache.TryGetCachedFile(youtubeLink, out MusicFile musicFile))
+            {
+                entry = QueueEntry.FromMusicFile(musicFile, userId);
+            }
+            else
+            {
+                entry = new QueueEntry(youtubeLink, userId, title, filePath: Path.Combine(Config.FileCachePath, title.RemovePathForbiddenChars()),
+                    alreadyDownloaded: false, onDownloadFinished: x =>
+                    {
+                        Cache.AddToCache(youtubeLink, entry, Config.CachePersistTime);
+                    });
+            }
+            Queues.GetOrCreateService(guildId).Add(entry);
+        }
+
+        private static string Enqueued(string title)
+        {
+            return $"Enqueued song: {title}";
+        }
+
+        private void PlayQueue(QueueService queue, IAudioClient audioClient)
+        {
+            // if the task ends with false, don't continue, the queue is empty.
+            queue.Play(audioClient).ContinueWith(x =>
+            {
+                if (x.Result) PlayQueue(queue, audioClient);
+                else AudioClients.Stop(audioClient).Wait();
+            });
+        }
+        #endregion
+        #region Search
+        private List<VideoInformation> Search(string query, int maxResults, Func<VideoInformation, int> comparer = null)
+        {
+            var items = new VideoSearch();
+
+            // ordering by similarity to title by default, I should look into how that algorithm works sometime, seems interesting
+            var results = items.SearchQuery(query, 1).OrderBy(comparer ?? (x => LevenshteinDistance.Compute(x.Title, query))).ToList();
+
+            if (results.Count > maxResults)
+                results.RemoveRange(maxResults, results.Count - maxResults);
+            return results;
+        }
+        #endregion
+        #endregion
     }
 
 }

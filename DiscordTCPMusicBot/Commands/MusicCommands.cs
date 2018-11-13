@@ -111,7 +111,7 @@ namespace DiscordTCPMusicBot.Commands
 
             Enqueue(youtubeLink, title, guild.Id);
 
-            await base.ReplyAsync(Enqueued(title));
+            await ReplyAsync(Enqueued(title));
 
             if (IsInVoiceChannel(guild, Context.Message.Author) && !IAmInVoiceChannel(FindVoiceChannel(guild, Context.Message.Author)))
             {
