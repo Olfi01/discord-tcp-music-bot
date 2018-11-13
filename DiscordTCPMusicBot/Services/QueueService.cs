@@ -22,6 +22,7 @@ namespace DiscordTCPMusicBot.Services
         private List<QueueEntry> currentList = null;
         private CancellationTokenSource cts;
         private readonly List<ulong> skipRequests = new List<ulong>();
+        private QueueEntry nowPlaying;
 
         public QueueService(ulong guildId, ConfigService config, GuildConfigManagerService guildConfigs)
         {
@@ -104,8 +105,9 @@ namespace DiscordTCPMusicBot.Services
 
         public QueueEntry[] GetQueue()
         {
+            int offset = nowPlaying == null ? 0 : 1;
             // prepare an array for the results and list reference for the copies
-            QueueEntry[] result = new QueueEntry[queues.Select(x => x.Count).Sum()];
+            QueueEntry[] result = new QueueEntry[queues.Select(x => x.Count).Sum() + offset];
             List<List<QueueEntry>> queuesCopy;
 
             lock (queues)
@@ -118,11 +120,13 @@ namespace DiscordTCPMusicBot.Services
             // now find the copied currentList
             var listToRead = queuesCopy.Find(x => x.First().OriginatorId == currentList.First().OriginatorId);
 
-            for (int i = 0; i < result.Length; i++)
+            for (int i = offset; i < result.Length; i++)
             {
                 // always get the next entry using round robin
                 result[i] = Next(queuesCopy, ref listToRead);
             }
+
+            if (offset == 1) result[0] = nowPlaying;
 
             return result;
         }
@@ -189,6 +193,7 @@ namespace DiscordTCPMusicBot.Services
         public async Task<bool> Play(QueueEntry queueEntry, IAudioClient audioClient, CancellationToken ct)
         {
             skipRequests.Clear();
+            nowPlaying = queueEntry;
             while (!queueEntry.IsDownloaded) { Thread.Sleep(1000); }
             var ffmpeg = CreateStream(queueEntry.FilePath);
             var output = ffmpeg.StandardOutput.BaseStream;
