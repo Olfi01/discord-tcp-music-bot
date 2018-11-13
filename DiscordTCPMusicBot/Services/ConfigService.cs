@@ -13,8 +13,7 @@ namespace DiscordTCPMusicBot.Services
         public ConfigService(string filePath)
         {
             this.filePath = filePath;
-            var dir = Path.GetDirectoryName(filePath);
-            if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+            Helper.CreateDirectoryIfNecessary(filePath);
 
             if (!File.Exists(filePath))
             {
@@ -37,7 +36,7 @@ namespace DiscordTCPMusicBot.Services
         public TimeSpan CachePersistTime { get => config.CachePersistTime; set { config.CachePersistTime = value; WriteFile(); } }
         public string FileCachePath { get => config.FileCachePath; set { config.FileCachePath = value; WriteFile(); } }
         public TimeSpan SongDelay { get => config.SongDelay; set { config.SongDelay = value; WriteFile(); } }
-        public string BotToken { get => File.ReadAllText(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), Constants.appDataSubPath, "token.txt")); }
+        public string BotToken { get => File.ReadAllText(Helper.GetAppDataPath("token.txt")); }
         public float MinSkipQuota { get => config.MinSkipQuota; set { config.MinSkipQuota = value; WriteFile(); } }
     }
 }

@@ -23,7 +23,7 @@
     <UpdatePeriodically>false</UpdatePeriodically>
     <UpdateRequired>false</UpdateRequired>
     <MapFileExtensions>true</MapFileExtensions>
-    <ApplicationRevision>8</ApplicationRevision>
+    <ApplicationRevision>10</ApplicationRevision>
     <ApplicationVersion>0.1.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <PublishWizardCompleted>true</PublishWizardCompleted>
@@ -188,6 +188,7 @@
     <Compile Include="Commands\MusicCommands.cs" />
     <Compile Include="Helpers\Constants.cs" />
     <Compile Include="Helpers\Extensions.cs" />
+    <Compile Include="Helpers\Helper.cs" />
     <Compile Include="Helpers\LevenshteinDistance.cs" />
     <Compile Include="Helpers\UserComparer.cs" />
     <Compile Include="Program.cs" />
@@ -197,7 +198,10 @@
     <Compile Include="Services\AudioClientService.cs" />
     <Compile Include="Services\CacheService.cs" />
     <Compile Include="Services\ConfigService.cs" />
-    <Compile Include="Services\ConfigServiceObject.cs" />
+    <Compile Include="Services\JSON\ConfigServiceObject.cs" />
+    <Compile Include="Services\GuildConfigManagerService.cs" />
+    <Compile Include="Services\GuildConfigService.cs" />
+    <Compile Include="Services\JSON\GuildConfigServiceObject.cs" />
     <Compile Include="Services\QueueManagerService.cs" />
     <Compile Include="Services\QueueService.cs" />
   </ItemGroup>

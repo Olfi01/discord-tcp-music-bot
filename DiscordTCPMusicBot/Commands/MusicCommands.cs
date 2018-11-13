@@ -22,6 +22,7 @@ namespace DiscordTCPMusicBot.Commands
         public QueueManagerService Queues { get; set; }
         public CacheService Cache { get; set; }
         public AudioClientService AudioClients { get; set; }
+        public GuildConfigManagerService Guilds { get; set; }
 
         #region Commands
         #region !search
@@ -224,6 +225,27 @@ namespace DiscordTCPMusicBot.Commands
                 queue.Skip();
                 await ReplyAsync("Skipping current song.");
             }
+        }
+        #endregion
+        #region !volume
+        [Command("volume"), Summary("Gets the overall volume for the current server"), RequireContext(ContextType.Guild)]
+        public async Task Volume()
+        {
+            var guild = Context.Guild;
+            var guildConfig = Guilds.GetOrCreateService(guild.Id);
+
+            await ReplyAsync($"Current volume: {(int)Math.Round(guildConfig.Volume * 100)}%");
+        }
+
+        [Command("volume"), Summary("Sets the overall volume for the current server"), RequireContext(ContextType.Guild)]
+        public async Task Volume([Summary("Volume in percent")]int percent)
+        {
+            var guild = Context.Guild;
+            var guildConfig = Guilds.GetOrCreateService(guild.Id);
+
+            guildConfig.Volume = percent / 100f;
+
+            await ReplyAsync($"Volume set to {percent}%. Change will be applied for the next song.");
         }
         #endregion
         #endregion

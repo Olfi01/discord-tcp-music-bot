@@ -2,6 +2,7 @@
 using Discord.Commands;
 using Discord.Net.Providers.WS4Net;
 using Discord.WebSocket;
+using DiscordTCPMusicBot.Commands;
 using DiscordTCPMusicBot.Helpers;
 using DiscordTCPMusicBot.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -161,13 +162,15 @@ namespace DiscordTCPMusicBot
         private async Task Init()
         {
             _map.AddSingleton(new CacheService());
-            _map.AddSingleton(new QueueManagerService());
             _map.AddSingleton(new AudioClientService());
+            var gcmService = new GuildConfigManagerService();
+            _map.AddSingleton(gcmService);
 
-            ConfigService config = new ConfigService(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), Constants.appDataSubPath, "config.json"));
+            ConfigService config = new ConfigService(Helper.GetAppDataPath("config.json"));
             Cleanup(config.FileCachePath);
             token = config.BotToken;
             _map.AddSingleton(config);
+            _map.AddSingleton(new QueueManagerService(config, gcmService));
 
             _services = _map.BuildServiceProvider();
 
