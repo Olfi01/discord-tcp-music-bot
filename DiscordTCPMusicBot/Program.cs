@@ -171,7 +171,7 @@ namespace DiscordTCPMusicBot
 
         private string HandleHttpCommand(string command, ulong userId, ulong guildId)
         {
-            
+            throw new NotImplementedException();
         }
 
         private IServiceProvider _services;

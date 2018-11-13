@@ -50,7 +50,7 @@ namespace DiscordTCPMusicBot.Commands
 
                 Task handler(Cacheable<IUserMessage, ulong> message, IMessageChannel channel, SocketReaction reaction)
                 {
-                    if (message.Id != sentMessage.Id || reaction.UserId != Context.Message.Author.Id || 
+                    if (message.Id != sentMessage.Id || reaction.UserId != Context.Message.Author.Id ||
                         (!Constants.Keycaps.Contains(reaction.Emote.Name) && Constants.EmojiX != reaction.Emote.Name))
                         return Task.CompletedTask;
                     if (Constants.EmojiX == reaction.Emote.Name)
@@ -86,7 +86,7 @@ namespace DiscordTCPMusicBot.Commands
                 await sentMessage.RemoveAllReactionsAsync();
                 await sentMessage.ModifyAsync(msgProp => msgProp.Content = Enqueued(title));
 
-                if (IsInVoiceChannel(guild, Context.Message.Author))
+                if (IsInVoiceChannel(guild, Context.Message.Author) && !IAmInVoiceChannel(FindVoiceChannel(guild, Context.Message.Author)))
                 {
                     await JoinAndPlay(queue, FindVoiceChannel(guild, Context.Message.Author));
                 }
@@ -113,7 +113,7 @@ namespace DiscordTCPMusicBot.Commands
 
             await base.ReplyAsync(Enqueued(title));
 
-            if (IsInVoiceChannel(guild, Context.Message.Author))
+            if (IsInVoiceChannel(guild, Context.Message.Author) && !IAmInVoiceChannel(FindVoiceChannel(guild, Context.Message.Author)))
             {
                 await JoinAndPlay(queue, FindVoiceChannel(guild, Context.Message.Author));
             }
@@ -274,6 +274,11 @@ namespace DiscordTCPMusicBot.Commands
         {
             IAudioClient client = await JoinChannel(channel);
             PlayQueue(queue, client);
+        }
+
+        private bool IAmInVoiceChannel(SocketVoiceChannel channel)
+        {
+            return channel.Users.Any(x => x.Id == Context.Client.CurrentUser.Id);
         }
         #endregion
         #region Queue
