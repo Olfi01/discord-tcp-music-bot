@@ -22,22 +22,7 @@ namespace DiscordTCPMusicBot.Commands
         [Command("test")]
         public async Task Test()
         {
-            SocketVoiceChannel channel = Context.Guild.VoiceChannels.First(x => x.Users.Contains(Context.Message.Author, new UserComparer()));
-            var audioClient = await AudioClients.Join(channel);
-            var path = "C:\\Users\\flmeyer\\Downloads\\Carly Rae Jepsen - Call Me Maybe.mp3";
-            var ffmpegInfo = new ProcessStartInfo
-            {
-                FileName = "ffmpeg",
-                Arguments = $"-i \"{path}\" -ac 2 -f s16le -ar 48000 pipe:1",
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-            };
-            var args = ffmpegInfo.Arguments;
-            var ffmpeg = Process.Start(ffmpegInfo);
-            var output = ffmpeg.StandardOutput.BaseStream;
-            var discord = audioClient.CreatePCMStream(AudioApplication.Mixed, bitrate: 1920);
-            await output.CopyToAsync(discord);
-            await discord.FlushAsync();
+            await ReplyAsync("Nothing to test right now.");
         }
     }
 }
