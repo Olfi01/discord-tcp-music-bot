@@ -9,6 +9,7 @@ namespace DiscordTCPMusicBot.Helpers
     internal static class Constants
     {
         public static readonly string[] Keycaps = { KeycapZero, KeycapOne, KeycapTwo, KeycapThree, KeycapFour, KeycapFive, KeycapSix, KeycapSeven, KeycapEight, KeycapNine, KeycapTen };
+        public const char Prefix = '!';
         public const string KeycapZero = "0⃣";
         public const string KeycapOne = "1⃣";
         public const string KeycapTwo = "2⃣";
@@ -23,6 +24,6 @@ namespace DiscordTCPMusicBot.Helpers
 
         public const string EmojiX = "❌";
 
-        public const string appDataSubPath = "Olfi01\\DCTCP\\";
+        public const string AppDataSubPath = "Olfi01\\DCTCP\\";
     }
 }

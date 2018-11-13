@@ -194,7 +194,7 @@ namespace DiscordTCPMusicBot
 
             // Create a number to track where the prefix ends and the command begins
             int pos = 0;
-            if (msg.HasCharPrefix('!', ref pos))
+            if (msg.HasCharPrefix(Constants.Prefix, ref pos))
             {
                 var context = new SocketCommandContext(_client, msg);
 

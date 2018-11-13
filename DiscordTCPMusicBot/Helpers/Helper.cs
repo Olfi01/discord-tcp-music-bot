@@ -17,7 +17,7 @@ namespace DiscordTCPMusicBot.Helpers
 
         public static string GetAppDataPath(string subpath)
         {
-            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), Constants.appDataSubPath, subpath);
+            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), Constants.AppDataSubPath, subpath);
         }
     }
 }
