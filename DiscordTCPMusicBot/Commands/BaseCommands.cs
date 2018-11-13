@@ -19,10 +19,12 @@ namespace DiscordTCPMusicBot.Commands
             await ReplyAsync("Pong!");
         }
 
+#if DEBUG
         [Command("test")]
         public async Task Test()
         {
             await ReplyAsync("Nothing to test right now.");
         }
+#endif
     }
 }
