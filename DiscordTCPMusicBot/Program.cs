@@ -2,7 +2,6 @@
 using Discord.Commands;
 using Discord.Net.Providers.WS4Net;
 using Discord.WebSocket;
-using DiscordTCPMusicBot.Commands;
 using DiscordTCPMusicBot.Helpers;
 using DiscordTCPMusicBot.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -115,26 +114,44 @@ namespace DiscordTCPMusicBot
         {
             _client.Log += Logger;
 
-            await Init();
+            var httpAuth = new HttpAuthenticationService(Helper.GetAppDataPath("auth.json"));
+
+            await Init(httpAuth);
 
             await _client.LoginAsync(TokenType.Bot, token);
             await _client.StartAsync();
 
-            HeyListen();
+            HeyListen(httpAuth);
 
             // Wait infinitely so your bot actually stays connected.
             await Task.Delay(-1);
         }
 
-        private void HeyListen()
+        private void HeyListen(HttpAuthenticationService httpAuth)
         {
             using (HttpListener listener = new HttpListener())
             {
                 listener.Prefixes.Add("http://localhost:420/");
+                listener.AuthenticationSchemes = AuthenticationSchemes.Basic;
                 listener.Start();
                 while (true)
                 {
                     HttpListenerContext context = listener.GetContext();
+                    HttpListenerBasicIdentity identity = (HttpListenerBasicIdentity)context.User.Identity;
+                    if (identity == null || !httpAuth.Authenticate(identity.Name, identity.Password))
+                    {
+                        HttpListenerResponse authResponse = context.Response;
+                        authResponse.AddHeader("WWW-Authenticate", "Basic");
+                        authResponse.StatusCode = (int)HttpStatusCode.Unauthorized;
+                        using (StreamWriter writer = new StreamWriter(authResponse.OutputStream))
+                        {
+                            writer.Write("NO!");
+                            writer.Flush();
+                        }
+                        continue;
+                    }
+                    var userId = Helper.GetUserId(identity.Name);
+                    var guildId = Helper.GetGuildId(identity.Name);
                     HttpListenerRequest request = context.Request;
                     string command;
                     using (StreamReader reader = new StreamReader(request.InputStream))
@@ -142,7 +159,7 @@ namespace DiscordTCPMusicBot
                         command = reader.ReadToEnd();
                     }
                     HttpListenerResponse response = context.Response;
-                    string responseString = HandleHttpCommand(command);
+                    string responseString = HandleHttpCommand(command, userId, guildId);
                     using (StreamWriter writer = new StreamWriter(response.OutputStream))
                     {
                         writer.Write(responseString);
@@ -152,19 +169,20 @@ namespace DiscordTCPMusicBot
             }
         }
 
-        private string HandleHttpCommand(string command)
+        private string HandleHttpCommand(string command, ulong userId, ulong guildId)
         {
-            throw new NotImplementedException();
+            
         }
 
         private IServiceProvider _services;
 
-        private async Task Init()
+        private async Task Init(HttpAuthenticationService httpAuth)
         {
             _map.AddSingleton(new CacheService());
             _map.AddSingleton(new AudioClientService());
             var gcmService = new GuildConfigManagerService();
             _map.AddSingleton(gcmService);
+            _map.AddSingleton(httpAuth);
 
             ConfigService config = new ConfigService(Helper.GetAppDataPath("config.json"));
             Cleanup(config.FileCachePath);

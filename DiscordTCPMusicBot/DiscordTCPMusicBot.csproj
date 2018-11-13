@@ -186,6 +186,7 @@
   <ItemGroup>
     <Compile Include="Commands\BaseCommands.cs" />
     <Compile Include="Commands\MusicCommands.cs" />
+    <Compile Include="Commands\TcpCommands.cs" />
     <Compile Include="Helpers\Constants.cs" />
     <Compile Include="Helpers\Extensions.cs" />
     <Compile Include="Helpers\Helper.cs" />
@@ -198,6 +199,7 @@
     <Compile Include="Services\AudioClientService.cs" />
     <Compile Include="Services\CacheService.cs" />
     <Compile Include="Services\ConfigService.cs" />
+    <Compile Include="Services\HttpAuthenticationService.cs" />
     <Compile Include="Services\JSON\ConfigServiceObject.cs" />
     <Compile Include="Services\GuildConfigManagerService.cs" />
     <Compile Include="Services\GuildConfigService.cs" />

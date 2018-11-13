@@ -145,7 +145,8 @@ namespace DiscordTCPMusicBot.Commands
 
             for (int i = 0; i < queueList.Length; i++)
             {
-                responseLines.Add($"{i + 1}.: {queueList[i].Title} (added by {queueList[i].Originator.Username})");
+                responseLines.Add($"{i + 1}.: {queueList[i].Title} (added by " +
+                    $"{Context.Guild.Users.FirstOrDefault(x => x.Id == queueList[i].OriginatorId)?.Username ?? queueList[i].OriginatorId.ToString()})");
             }
 
             await ReplyAsync(string.Join("\n", "Current Queue:", string.Join("\n", responseLines)));
@@ -281,11 +282,11 @@ namespace DiscordTCPMusicBot.Commands
             QueueEntry entry = null;
             if (Cache.TryGetCachedFile(youtubeLink, out MusicFile musicFile))
             {
-                entry = QueueEntry.FromMusicFile(musicFile, Context.Message.Author);
+                entry = QueueEntry.FromMusicFile(musicFile, Context.Message.Author.Id);
             }
             else
             {
-                entry = new QueueEntry(youtubeLink, Context.Message.Author, title, filePath: Path.Combine(Config.FileCachePath, title.RemovePathForbiddenChars()),
+                entry = new QueueEntry(youtubeLink, Context.Message.Author.Id, title, filePath: Path.Combine(Config.FileCachePath, title.RemovePathForbiddenChars()),
                     alreadyDownloaded: false, onDownloadFinished: x =>
                     {
                         Cache.AddToCache(youtubeLink, entry, Config.CachePersistTime);

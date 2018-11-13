@@ -8,13 +8,13 @@ namespace DiscordTCPMusicBot.Queue
 {
     public class QueueEntry : MusicFile
     {
-        public SocketUser Originator { get; set; }
+        public ulong OriginatorId { get; set; }
         public Guid Guid { get; set; }
         
-        public QueueEntry(string youtubeUrl, SocketUser originator, string title, string filePath = null, bool alreadyDownloaded = false, Action<Task> onDownloadFinished = null) 
+        public QueueEntry(string youtubeUrl, ulong originatorId, string title, string filePath = null, bool alreadyDownloaded = false, Action<Task> onDownloadFinished = null) 
             : base(youtubeUrl, filePath, title)
         {
-            Originator = originator;
+            OriginatorId = originatorId;
             if (filePath != null && !alreadyDownloaded)
             {
                 FilePath = null;
@@ -27,9 +27,9 @@ namespace DiscordTCPMusicBot.Queue
             Guid = new Guid();
         }
 
-        public static QueueEntry FromMusicFile(MusicFile musicFile, SocketUser originator)
+        public static QueueEntry FromMusicFile(MusicFile musicFile, ulong originatorId)
         {
-            return new QueueEntry(musicFile.YoutubeUrl, originator, musicFile.Title, musicFile.FilePath, true);
+            return new QueueEntry(musicFile.YoutubeUrl, originatorId, musicFile.Title, musicFile.FilePath, true);
         }
     }
 }

@@ -36,7 +36,7 @@ namespace DiscordTCPMusicBot.Services
             {
                 ClearQueues();
 
-                var queue = queues.FirstOrDefault(x => x.First().Originator.Id == entry.Originator.Id);
+                var queue = queues.FirstOrDefault(x => x.First().OriginatorId == entry.OriginatorId);
                 // if theres no queue for the originator, create one
                 if (queue == null)
                 {
@@ -116,7 +116,7 @@ namespace DiscordTCPMusicBot.Services
                 queuesCopy = queues.Select(x => x.Copy()).Copy();
             }
             // now find the copied currentList
-            var listToRead = queuesCopy.Find(x => x.First().Originator.Id == currentList.First().Originator.Id);
+            var listToRead = queuesCopy.Find(x => x.First().OriginatorId == currentList.First().OriginatorId);
 
             for (int i = 0; i < result.Length; i++)
             {
@@ -148,7 +148,7 @@ namespace DiscordTCPMusicBot.Services
                 reasonOrTitle = "No such index on the queue.";
                 return false;
             }
-            if (queue[index].Originator.Id != user.Id)
+            if (queue[index].OriginatorId != user.Id)
             {
                 reasonOrTitle = "You haven't added this song, so you cannot remove it.";
                 return false;
