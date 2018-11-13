@@ -1,4 +1,5 @@
-﻿using MediaToolkit;
+﻿using DiscordTCPMusicBot.Helpers;
+using MediaToolkit;
 using MediaToolkit.Model;
 using System;
 using System.IO;
@@ -26,8 +27,7 @@ namespace DiscordTCPMusicBot.Music
 
         public async Task DownloadAsync(string filePath)
         {
-            var dir = Path.GetDirectoryName(filePath);
-            if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+            Helper.CreateDirectoryIfNecessary(filePath);
 
             try
             {

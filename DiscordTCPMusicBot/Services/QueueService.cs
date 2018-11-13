@@ -14,12 +14,21 @@ namespace DiscordTCPMusicBot.Services
     public class QueueService
     {
         public ConfigService Config { get; set; }
+        public GuildConfigManagerService GuildConfigs { get; set; }
+        public GuildConfigService Guild { get; set; }
 
         private readonly List<List<QueueEntry>> queues = new List<List<QueueEntry>>();
         // to keep track of round robin
         private List<QueueEntry> currentList = null;
         private CancellationTokenSource cts;
         private readonly List<ulong> skipRequests = new List<ulong>();
+
+        public QueueService(ulong guildId, ConfigService config, GuildConfigManagerService guildConfigs)
+        {
+            Config = config;
+            GuildConfigs = guildConfigs;
+            Guild = GuildConfigs.GetOrCreateService(guildId);
+        }
 
         public void Add(QueueEntry entry)
         {
@@ -229,7 +238,7 @@ namespace DiscordTCPMusicBot.Services
             var ffmpeg = new ProcessStartInfo
             {
                 FileName = "ffmpeg",
-                Arguments = $"-i \"{path}\" -ac 2 -f s16le -ar 48000 pipe:1",
+                Arguments = $"-i \"{path}\" -filter:a \"volume={Guild.Volume}\" -ac 2 -f s16le -ar 48000 pipe:1",
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
             };

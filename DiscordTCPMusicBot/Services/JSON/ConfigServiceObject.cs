@@ -16,7 +16,7 @@ namespace DiscordTCPMusicBot.Services
         {
             MaxSearchResults = 4;
             CachePersistTime = TimeSpan.FromDays(1);
-            FileCachePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), Constants.appDataSubPath, "temp\\");
+            FileCachePath = Helper.GetAppDataPath("temp\\");
             SongDelay = TimeSpan.FromSeconds(2);
             MinSkipQuota = 0.5f;
         }
