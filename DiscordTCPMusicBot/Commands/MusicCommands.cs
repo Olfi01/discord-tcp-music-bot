@@ -49,7 +49,8 @@ namespace DiscordTCPMusicBot.Commands
 
                 Task handler(Cacheable<IUserMessage, ulong> message, IMessageChannel channel, SocketReaction reaction)
                 {
-                    if (message.Id != sentMessage.Id || reaction.UserId != Context.Message.Author.Id || !Constants.Keycaps.Contains(reaction.Emote.Name))
+                    if (message.Id != sentMessage.Id || reaction.UserId != Context.Message.Author.Id || 
+                        (!Constants.Keycaps.Contains(reaction.Emote.Name) && Constants.EmojiX != reaction.Emote.Name))
                         return Task.CompletedTask;
                     if (Constants.EmojiX == reaction.Emote.Name)
                     {
