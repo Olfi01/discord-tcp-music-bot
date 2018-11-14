@@ -90,6 +90,10 @@ namespace DiscordTCPMusicBot.Commands
                 {
                     await JoinAndPlay(queue, FindVoiceChannel(guild, Context.Message.Author));
                 }
+                else if (!queue.IsPlaying)
+                {
+                    PlayQueue(queue, AudioClients.GetClient(guild.Id));
+                }
             }
         }
         #endregion
@@ -116,6 +120,10 @@ namespace DiscordTCPMusicBot.Commands
             if (IsInVoiceChannel(guild, Context.Message.Author) && !IAmInVoiceChannel(FindVoiceChannel(guild, Context.Message.Author)))
             {
                 await JoinAndPlay(queue, FindVoiceChannel(guild, Context.Message.Author));
+            }
+            else if (!queue.IsPlaying)
+            {
+                PlayQueue(queue, AudioClients.GetClient(guild.Id));
             }
         }
         #endregion
@@ -311,7 +319,7 @@ namespace DiscordTCPMusicBot.Commands
             queue.Play(audioClient).ContinueWith(x =>
             {
                 if (x.Result) PlayQueue(queue, audioClient);
-                else AudioClients.Stop(audioClient).Wait();
+                else if (!Config.RemainInChannel) AudioClients.Stop(audioClient).Wait();
             });
         }
         #endregion

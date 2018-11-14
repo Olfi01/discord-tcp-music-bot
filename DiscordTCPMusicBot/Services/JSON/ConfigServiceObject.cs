@@ -20,6 +20,7 @@ namespace DiscordTCPMusicBot.Services
             SongDelay = TimeSpan.FromSeconds(2);
             MinSkipQuota = 0.5f;
             HttpPrefix = "http://localhost:420/";
+            RemainInChannel = false;
         }
 
         [JsonProperty(PropertyName = "max_search_results")]
@@ -41,5 +42,8 @@ namespace DiscordTCPMusicBot.Services
 
         [JsonProperty(PropertyName = "http_prefix")]
         public string HttpPrefix { get; set; }
+
+        [JsonProperty(PropertyName = "remain_in_channel")]
+        public bool RemainInChannel { get; set; }
     }
 }

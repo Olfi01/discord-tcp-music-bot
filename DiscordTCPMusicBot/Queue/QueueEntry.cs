@@ -24,7 +24,7 @@ namespace DiscordTCPMusicBot.Queue
                     //FilePath = filePath;
                 });
             }
-            Guid = new Guid();
+            Guid = Guid.NewGuid();
         }
 
         public static QueueEntry FromMusicFile(MusicFile musicFile, ulong originatorId)

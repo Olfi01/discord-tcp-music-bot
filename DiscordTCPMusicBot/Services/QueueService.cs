@@ -146,16 +146,25 @@ namespace DiscordTCPMusicBot.Services
         /// <returns>true on success</returns>
         public bool TryRemove(int index, SocketUser user, out string reasonOrTitle)
         {
-            if (nowPlaying != null) index++;
+            return TryRemove(index, user.Id, out reasonOrTitle);
+        }
+
+        public bool TryRemove(int index, ulong userId, out string reasonOrTitle)
+        {
             var queue = GetQueue();
             if (index >= queue.Length)
             {
                 reasonOrTitle = "No such index on the queue.";
                 return false;
             }
-            if (queue[index].OriginatorId != user.Id)
+            if (queue[index].OriginatorId != userId)
             {
                 reasonOrTitle = "You haven't added this song, so you cannot remove it.";
+                return false;
+            }
+            if (queue[index].Guid == nowPlaying.Guid)
+            {
+                reasonOrTitle = "To remove the currently playing song, use !skip.";
                 return false;
             }
             reasonOrTitle = queue[index].Title;
@@ -251,5 +260,7 @@ namespace DiscordTCPMusicBot.Services
             };
             return Process.Start(ffmpeg);
         }
+
+        public bool IsPlaying => nowPlaying != null;
     }
 }

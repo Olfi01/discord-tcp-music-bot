@@ -223,6 +223,10 @@ namespace DiscordTCPMusicBot
                 {
                     JoinAndPlay(queue, FindVoiceChannel(guild, userId)).Wait();
                 }
+                else if (!queue.IsPlaying)
+                {
+                    PlayQueue(queue, AudioClients.GetClient(guildId));
+                }
                 return Enqueued(title);
             }
             #endregion
@@ -293,6 +297,24 @@ namespace DiscordTCPMusicBot
                 string response = string.Join("\n", lines);
 
                 return response;
+            }
+            #endregion
+            #region remove
+            if (action == "remove")
+            {
+                if (!int.TryParse(args, out int index))
+                {
+                    return "Not a valid index.";
+                }
+                var queue = Queues.GetOrCreateService(guildId);
+                if (queue.TryRemove(index - 1, userId, out string reasonOrTitle))
+                {
+                    return $"Removed {reasonOrTitle}.";
+                }
+                else
+                {
+                    return $"Failed to remove song at index {index}. Reason: {reasonOrTitle}";
+                }
             }
             #endregion
             #endregion
@@ -409,7 +431,7 @@ namespace DiscordTCPMusicBot
             queue.Play(audioClient).ContinueWith(x =>
             {
                 if (x.Result) PlayQueue(queue, audioClient);
-                else AudioClients.Stop(audioClient).Wait();
+                else if (!Config.RemainInChannel) AudioClients.Stop(audioClient).Wait();
             });
         }
         #endregion
