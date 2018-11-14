@@ -44,7 +44,7 @@ namespace DiscordTCPMusicBot.Services
         public string CreateOrGetToken(string username)
         {
             if (auth.ContainsKey(username)) return auth[username];
-            Guid token = new Guid();
+            Guid token = Guid.NewGuid();
             Add(username, token.ToString());
             return token.ToString();
         }

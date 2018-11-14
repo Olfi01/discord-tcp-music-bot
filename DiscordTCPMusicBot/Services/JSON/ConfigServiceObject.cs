@@ -19,6 +19,8 @@ namespace DiscordTCPMusicBot.Services
             FileCachePath = Helper.GetAppDataPath("temp\\");
             SongDelay = TimeSpan.FromSeconds(2);
             MinSkipQuota = 0.5f;
+            HttpPrefix = "http://localhost:420/";
+            RemainInChannel = false;
         }
 
         [JsonProperty(PropertyName = "max_search_results")]
@@ -37,5 +39,11 @@ namespace DiscordTCPMusicBot.Services
 
         [JsonProperty(PropertyName = "min_skip_quota")]
         public float MinSkipQuota { get; set; }
+
+        [JsonProperty(PropertyName = "http_prefix")]
+        public string HttpPrefix { get; set; }
+
+        [JsonProperty(PropertyName = "remain_in_channel")]
+        public bool RemainInChannel { get; set; }
     }
 }
