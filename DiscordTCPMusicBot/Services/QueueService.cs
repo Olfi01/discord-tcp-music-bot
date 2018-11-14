@@ -204,7 +204,18 @@ namespace DiscordTCPMusicBot.Services
         {
             skipRequests.Clear();
             nowPlaying = queueEntry;
-            while (!queueEntry.IsDownloaded) { Thread.Sleep(1000); }
+            while (!queueEntry.IsDownloaded)
+            {
+                Thread.Sleep(1000);
+                if (ct.IsCancellationRequested)
+                {
+                    lock (queues)
+                    {
+                        nowPlaying = null;
+                        return HasEntries();
+                    }
+                }
+            }
             var ffmpeg = CreateStream(queueEntry.FilePath);
             var output = ffmpeg.StandardOutput.BaseStream;
             var discord = audioClient.CreatePCMStream(AudioApplication.Mixed/*, bitrate: 1920*/);
