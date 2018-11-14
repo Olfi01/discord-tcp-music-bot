@@ -146,6 +146,7 @@ namespace DiscordTCPMusicBot.Services
         /// <returns>true on success</returns>
         public bool TryRemove(int index, SocketUser user, out string reasonOrTitle)
         {
+            if (nowPlaying != null) index++;
             var queue = GetQueue();
             if (index >= queue.Length)
             {
@@ -217,7 +218,8 @@ namespace DiscordTCPMusicBot.Services
                 await Task.Delay(Config.SongDelay);
                 return true;
             }
-            else return false;
+            nowPlaying = null;
+            return false;
         }
 
         /// <summary>
