@@ -17,7 +17,22 @@ namespace DiscordTCPMusicBot.Helpers
 
         public static string GetAppDataPath(string subpath)
         {
-            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), Constants.appDataSubPath, subpath);
+            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), Constants.AppDataSubPath, subpath);
         }
+
+        public static string CreateHttpUsername(ulong userId, ulong guildId)
+        {
+            return $"{userId}@{guildId}";
+        }
+
+        private static Tuple<ulong, ulong> GetUserAndGuildId(string httpUsername)
+        {
+            var split = httpUsername.Split('@');
+            return new Tuple<ulong, ulong>(ulong.Parse(split[0]), ulong.Parse(split[1]));
+        }
+
+        public static ulong GetUserId(string httpUsername) => GetUserAndGuildId(httpUsername).Item1;
+
+        public static ulong GetGuildId(string httpUsername) => GetUserAndGuildId(httpUsername).Item2;
     }
 }

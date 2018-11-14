@@ -50,7 +50,7 @@ namespace DiscordTCPMusicBot.Commands
 
                 Task handler(Cacheable<IUserMessage, ulong> message, IMessageChannel channel, SocketReaction reaction)
                 {
-                    if (message.Id != sentMessage.Id || reaction.UserId != Context.Message.Author.Id || 
+                    if (message.Id != sentMessage.Id || reaction.UserId != Context.Message.Author.Id ||
                         (!Constants.Keycaps.Contains(reaction.Emote.Name) && Constants.EmojiX != reaction.Emote.Name))
                         return Task.CompletedTask;
                     if (Constants.EmojiX == reaction.Emote.Name)
@@ -86,16 +86,20 @@ namespace DiscordTCPMusicBot.Commands
                 await sentMessage.RemoveAllReactionsAsync();
                 await sentMessage.ModifyAsync(msgProp => msgProp.Content = Enqueued(title));
 
-                if (IsInVoiceChannel(guild, Context.Message.Author))
+                if (IsInVoiceChannel(guild, Context.Message.Author) && !IAmInVoiceChannel(FindVoiceChannel(guild, Context.Message.Author)))
                 {
                     await JoinAndPlay(queue, FindVoiceChannel(guild, Context.Message.Author));
+                }
+                else if (!queue.IsPlaying)
+                {
+                    PlayQueue(queue, AudioClients.GetClient(guild.Id));
                 }
             }
         }
         #endregion
         #region !play
         [Command("play"), Summary("Plays music from youtube"), RequireContext(ContextType.Guild)]
-        public async Task Play([Remainder, Summary("The query or the URL of the youtube video.")] string param)
+        public async Task Play([Remainder, Summary("The query or the URL of the youtube video.")] string urlOrQuery)
         {
             SocketGuild guild = Context.Guild;
             QueueService queue = Queues.GetOrCreateService(guild.Id);
@@ -105,17 +109,21 @@ namespace DiscordTCPMusicBot.Commands
 
             // Query, select first video found, works for links too.
             // If param looks like a valid Uri, don't search for title similarities.
-            var result = Search(param, 1, Uri.IsWellFormedUriString(param, UriKind.Absolute) ? (Func<VideoInformation, int>)(x => (x.Url == param) ? 0 : 1) : null)[0];
+            var result = Search(urlOrQuery, 1, Uri.IsWellFormedUriString(urlOrQuery, UriKind.Absolute) ? (Func<VideoInformation, int>)(x => (x.Url == urlOrQuery) ? 0 : 1) : null)[0];
             youtubeLink = result.Url;
             title = result.Title;
 
             Enqueue(youtubeLink, title, guild.Id);
 
-            await base.ReplyAsync(Enqueued(title));
+            await ReplyAsync(Enqueued(title));
 
-            if (IsInVoiceChannel(guild, Context.Message.Author))
+            if (IsInVoiceChannel(guild, Context.Message.Author) && !IAmInVoiceChannel(FindVoiceChannel(guild, Context.Message.Author)))
             {
                 await JoinAndPlay(queue, FindVoiceChannel(guild, Context.Message.Author));
+            }
+            else if (!queue.IsPlaying)
+            {
+                PlayQueue(queue, AudioClients.GetClient(guild.Id));
             }
         }
         #endregion
@@ -145,7 +153,8 @@ namespace DiscordTCPMusicBot.Commands
 
             for (int i = 0; i < queueList.Length; i++)
             {
-                responseLines.Add($"{i + 1}.: {queueList[i].Title} (added by {queueList[i].Originator.Username})");
+                responseLines.Add($"{i + 1}.: {queueList[i].Title} (added by " +
+                    $"{Context.Guild.Users.FirstOrDefault(x => x.Id == queueList[i].OriginatorId)?.Username ?? queueList[i].OriginatorId.ToString()})");
             }
 
             await ReplyAsync(string.Join("\n", "Current Queue:", string.Join("\n", responseLines)));
@@ -274,6 +283,11 @@ namespace DiscordTCPMusicBot.Commands
             IAudioClient client = await JoinChannel(channel);
             PlayQueue(queue, client);
         }
+
+        private bool IAmInVoiceChannel(SocketVoiceChannel channel)
+        {
+            return channel.Users.Any(x => x.Id == Context.Client.CurrentUser.Id);
+        }
         #endregion
         #region Queue
         private void Enqueue(string youtubeLink, string title, ulong guildId)
@@ -281,11 +295,11 @@ namespace DiscordTCPMusicBot.Commands
             QueueEntry entry = null;
             if (Cache.TryGetCachedFile(youtubeLink, out MusicFile musicFile))
             {
-                entry = QueueEntry.FromMusicFile(musicFile, Context.Message.Author);
+                entry = QueueEntry.FromMusicFile(musicFile, Context.Message.Author.Id);
             }
             else
             {
-                entry = new QueueEntry(youtubeLink, Context.Message.Author, title, filePath: Path.Combine(Config.FileCachePath, title.RemovePathForbiddenChars()),
+                entry = new QueueEntry(youtubeLink, Context.Message.Author.Id, title, filePath: Path.Combine(Config.FileCachePath, title.RemovePathForbiddenChars()),
                     alreadyDownloaded: false, onDownloadFinished: x =>
                     {
                         Cache.AddToCache(youtubeLink, entry, Config.CachePersistTime);
@@ -305,7 +319,7 @@ namespace DiscordTCPMusicBot.Commands
             queue.Play(audioClient).ContinueWith(x =>
             {
                 if (x.Result) PlayQueue(queue, audioClient);
-                else AudioClients.Stop(audioClient).Wait();
+                else if (!Config.RemainInChannel) AudioClients.Stop(audioClient).Wait();
             });
         }
         #endregion

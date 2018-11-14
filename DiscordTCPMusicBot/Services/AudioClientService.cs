@@ -18,6 +18,11 @@ namespace DiscordTCPMusicBot.Services
             return clients.ContainsKey(guildId);
         }
 
+        public IAudioClient GetClient(ulong guildId)
+        {
+            return clients[guildId];
+        }
+
         public async Task LeaveChannelOn(ulong guildId)
         {
             await clients[guildId].StopAsync();
