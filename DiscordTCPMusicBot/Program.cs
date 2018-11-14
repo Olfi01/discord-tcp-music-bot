@@ -199,33 +199,103 @@ namespace DiscordTCPMusicBot
                 args = command.Substring(command.IndexOf(" ") + 1);
             }
 
-            switch (action)
+            #region Commands
+            #region play
+            if (action == "play")
             {
-                #region play
-                case "play":
-                    if (string.IsNullOrEmpty(args)) return "You must specify either a query or a URL";
+                if (string.IsNullOrEmpty(args)) return "You must specify either a query or a URL";
 
-                    SocketGuild guild = _client.GetGuild(guildId);
-                    QueueService queue = Queues.GetOrCreateService(guildId);
+                SocketGuild guild = _client.GetGuild(guildId);
+                QueueService queue = Queues.GetOrCreateService(guildId);
 
-                    string youtubeLink;
-                    string title = null;
+                string youtubeLink;
+                string title = null;
 
-                    // Query, select first video found, works for links too.
-                    // If param looks like a valid Uri, don't search for title similarities.
-                    var result = Search(args, 1, Uri.IsWellFormedUriString(args, UriKind.Absolute) ? (Func<VideoInformation, int>)(x => (x.Url == args) ? 0 : 1) : null)[0];
-                    youtubeLink = result.Url;
-                    title = result.Title;
+                // Query, select first video found, works for links too.
+                // If param looks like a valid Uri, don't search for title similarities.
+                var result = Search(args, 1, Uri.IsWellFormedUriString(args, UriKind.Absolute) ? (Func<VideoInformation, int>)(x => (x.Url == args) ? 0 : 1) : null)[0];
+                youtubeLink = result.Url;
+                title = result.Title;
 
-                    Enqueue(youtubeLink, title, guildId, userId);
+                Enqueue(youtubeLink, title, guildId, userId);
 
-                    if (IsInVoiceChannel(guild, userId) && !IAmInVoiceChannel(FindVoiceChannel(guild, userId)))
-                    {
-                        JoinAndPlay(queue, FindVoiceChannel(guild, userId)).Wait();
-                    }
-                    return Enqueued(title);
-                    #endregion
+                if (IsInVoiceChannel(guild, userId) && !IAmInVoiceChannel(FindVoiceChannel(guild, userId)))
+                {
+                    JoinAndPlay(queue, FindVoiceChannel(guild, userId)).Wait();
+                }
+                return Enqueued(title);
             }
+            #endregion
+            #region queue
+            if (action == "queue")
+            {
+                SocketGuild guild = _client.GetGuild(guildId);
+                var queue = Queues.GetOrCreateService(guildId);
+
+                var queueList = queue.GetQueue();
+                List<string> responseLines = new List<string>();
+
+                for (int i = 0; i < queueList.Length; i++)
+                {
+                    responseLines.Add($"{i + 1}.: {queueList[i].Title} (added by " +
+                        $"{guild.Users.FirstOrDefault(x => x.Id == queueList[i].OriginatorId)?.Username ?? queueList[i].OriginatorId.ToString()})");
+                }
+
+                return string.Join("\n", "Current Queue:", string.Join("\n", responseLines));
+            }
+            #endregion
+            #region skip
+            if (action == "skip")
+            {
+                var guild = _client.GetGuild(guildId);
+                var user = guild.GetUser(userId);
+                var queue = Queues.GetOrCreateService(guild.Id);
+
+                if (!IsInVoiceChannel(guild, userId))
+                {
+                    return "You are not in any channel!";
+                }
+                SocketVoiceChannel channel = FindVoiceChannel(guild, userId);
+                if (!channel.Users.Any(x => x.Id == _client.CurrentUser.Id))
+                {
+                    return "You are not in the same channel as me!";
+                }
+
+                int requests = queue.RequestSkip(user.Id, channel);
+
+                int usercount = channel.Users.Count(x => !x.IsBot);
+                float part = (float)requests / usercount;
+                var response = $"Skip requested ({requests} of {usercount}, {(int)Math.Round(part * 100)}%). " +
+                    $"{(int)Math.Round(Config.MinSkipQuota * 100)}% needed.";
+
+                if (part > Config.MinSkipQuota)
+                {
+                    queue.Skip();
+                    return $"{response}\nSkipping current song.";
+                }
+
+                return response;
+            }
+            #endregion
+            #region search
+            if (action == "search")
+            {
+                SocketGuild guild = _client.GetGuild(guildId);
+                QueueService queue = Queues.GetOrCreateService(guildId);
+
+                List<VideoInformation> results = Search(args, Config.MaxSearchResults);
+
+                var lines = new List<string>();
+                for (int i = 0; i < results.Count; i++)
+                {
+                    lines.Add($"{i + 1}. {results[i].Title} ({results[i].Url})");
+                }
+                string response = string.Join("\n", lines);
+
+                return response;
+            }
+            #endregion
+            #endregion
 
             return "Unrecognized command.";
         }
