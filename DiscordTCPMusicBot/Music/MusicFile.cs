@@ -3,6 +3,7 @@ using MediaToolkit;
 using MediaToolkit.Model;
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using VideoLibrary;
 
@@ -34,7 +35,7 @@ namespace DiscordTCPMusicBot.Music
                 if (FilePath != null) throw new InvalidOperationException("File has already been downloaded.");
 
                 var youtube = YouTube.Default;
-                var vid = await youtube.GetVideoAsync(YoutubeUrl);
+                var vid = (await youtube.GetAllVideosAsync(YoutubeUrl)).OrderByDescending(x => x.AudioBitrate).First();
                 var bytes = await vid.GetBytesAsync();
                 string inputFilePath = filePath + vid.FullName;
                 File.WriteAllBytes(inputFilePath, bytes);
